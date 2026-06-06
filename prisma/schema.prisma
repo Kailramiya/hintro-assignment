@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  meetings     Meeting[]
+}
+
+// participants: [{ name: string, email?: string }]
+// transcript:   [{ speaker: string, text: string, timestamp: string }]
+model Meeting {
+  id           String           @id @default(uuid())
+  title        String
+  participants Json
+  meetingDate  DateTime
+  transcript   Json
+  analyzedAt   DateTime?
+  createdById  String
+  createdBy    User             @relation(fields: [createdById], references: [id])
+  analysis     MeetingAnalysis?
+  actionItems  ActionItem[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+// decisions:           [{ description, citationText, citationTimestamp, citationSpeaker }]
+// followUpSuggestions: string[]
+model MeetingAnalysis {
+  id                  String   @id @default(uuid())
+  meetingId           String   @unique
+  meeting             Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  summary             String
+  decisions           Json
+  followUpSuggestions Json
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model ActionItem {
+  id                String           @id @default(uuid())
+  meetingId         String?
+  meeting           Meeting?         @relation(fields: [meetingId], references: [id])
+  title             String
+  description       String?
+  assignee          String
+  assigneeEmail     String?
+  dueDate           DateTime?
+  status            ActionItemStatus @default(PENDING)
+  citationText      String?
+  citationTimestamp String?
+  citationSpeaker   String?
+  reminderSentAt    DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  reminders         ReminderHistory[]
+}
+
+enum ActionItemStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model ReminderHistory {
+  id           String     @id @default(uuid())
+  actionItemId String
+  actionItem   ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  sentAt       DateTime   @default(now())
+  channel      String
+  recipient    String?
+  status       String
+  metadata     Json?
+}
