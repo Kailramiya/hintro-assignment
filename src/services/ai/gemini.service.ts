@@ -8,6 +8,7 @@ const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 const generationConfig: GenerationConfig = {
   temperature: 0.1,
   topP: 0.8,
+  responseMimeType: 'application/json',
 };
 
 function formatTranscript(entries: TranscriptEntry[]): string {
@@ -116,8 +117,8 @@ export async function analyzeMeeting(
   logger.info('Starting AI analysis', { traceId, meetingId });
 
   const model = genAI.getGenerativeModel(
-    { model: 'gemini-1.5-flash', generationConfig },
-    { apiVersion: 'v1' }
+    { model: 'gemini-2.0-flash-lite', generationConfig },
+    { apiVersion: 'v1beta' }
   );
 
   const prompt = buildPrompt(title, meetingDate.toISOString(), participants, transcript);
