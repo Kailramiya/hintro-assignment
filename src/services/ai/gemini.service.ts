@@ -8,7 +8,6 @@ const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 const generationConfig: GenerationConfig = {
   temperature: 0.1,
   topP: 0.8,
-  responseMimeType: 'application/json',
 };
 
 function formatTranscript(entries: TranscriptEntry[]): string {
