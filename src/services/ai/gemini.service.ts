@@ -117,7 +117,8 @@ export async function analyzeMeeting(
   logger.info('Starting AI analysis', { traceId, meetingId });
 
   const model = genAI.getGenerativeModel(
-    { model: 'gemini-1.5-flash', generationConfig }
+    { model: 'gemini-1.5-flash', generationConfig },
+    { apiVersion: 'v1' }
   );
 
   const prompt = buildPrompt(title, meetingDate.toISOString(), participants, transcript);
