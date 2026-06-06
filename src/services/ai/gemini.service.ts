@@ -23,7 +23,6 @@ function buildPrompt(
   participants: Participant[],
   transcript: TranscriptEntry[]
 ): string {
-  const participantList = participants.map((p) => `- ${p.name}${p.email ? ` (${p.email})` : ''}`).join('\n');
   const formattedTranscript = formatTranscript(transcript);
   const speakers = [...new Set(transcript.map((e) => e.speaker))].join(', ');
 
@@ -118,7 +117,7 @@ export async function analyzeMeeting(
   logger.info('Starting AI analysis', { traceId, meetingId });
 
   const model = genAI.getGenerativeModel(
-    { model: 'gemini-2.0-flash', generationConfig }
+    { model: 'gemini-1.5-flash', generationConfig }
   );
 
   const prompt = buildPrompt(title, meetingDate.toISOString(), participants, transcript);
