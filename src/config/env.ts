@@ -9,7 +9,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid URL'),
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
-  GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+  GROQ_API_KEY: z.string().min(1, 'GROQ_API_KEY is required'),
   RESEND_API_KEY: z.string().default(''),
   RESEND_FROM_EMAIL: z.string().default('Meeting Intelligence <noreply@example.com>'),
   CANDIDATE_NAME: z.string().default('Aman Kundu'),

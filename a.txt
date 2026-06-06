@@ -1,0 +1,38 @@
+$auth = Invoke-RestMethod -Uri "https://hintro-assignment-production.up.railway.app/api/auth/login" `
+  -Method POST `
+  -Headers @{ "Content-Type" = "application/json" } `
+  -Body '{"email":"demo@test.com","password":"Demo1234!"}'
+
+$TOKEN = $auth.data.token
+Write-Host "Token set: $($TOKEN.Substring(0,20))..."
+
+
+
+
+
+
+$meeting = Invoke-RestMethod -Uri "https://hintro-assignment-production.up.railway.app/api/meetings" `
+  -Method POST `
+  -Headers @{ Authorization = "Bearer $TOKEN"; "Content-Type" = "application/json" } `
+  -Body '{"title":"Sprint Review","meetingDate":"2024-12-02T10:00:00Z","participants":[{"name":"Alice Johnson"},{"name":"Bob Smith"}],"transcript":[{"speaker":"Alice Johnson","text":"We need to ship the login feature by Friday.","timestamp":"00:01:00"},{"speaker":"Bob Smith","text":"I will write the unit tests by Wednesday.","timestamp":"00:01:30"},{"speaker":"Alice Johnson","text":"We have decided to postpone the dashboard to next sprint.","timestamp":"00:02:00"}]}'
+$meeting.data | ConvertTo-Json -Depth 5
+
+
+
+
+
+$MEETING_ID = $meeting.data.id
+$result = Invoke-RestMethod -Uri "https://hintro-assignment-production.up.railway.app/api/meetings/$MEETING_ID/analyze" `
+  -Method POST `
+  -Headers @{ Authorization = "Bearer $TOKEN" }
+$result.data | ConvertTo-Json -Depth 10
+
+
+
+# List action items
+Invoke-RestMethod -Uri "https://hintro-assignment-production.up.railway.app/api/action-items" `
+  -Headers @{ Authorization = "Bearer $TOKEN" } | ConvertTo-Json -Depth 5
+
+# Check overdue
+Invoke-RestMethod -Uri "https://hintro-assignment-production.up.railway.app/api/action-items/overdue" `
+  -Headers @{ Authorization = "Bearer $TOKEN" } | ConvertTo-Json -Depth 5

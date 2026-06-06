@@ -1,15 +1,9 @@
-import { GoogleGenerativeAI, GenerationConfig } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { AIAnalysisResult, TranscriptEntry, Participant } from '../../types';
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-
-const generationConfig: GenerationConfig = {
-  temperature: 0.1,
-  topP: 0.8,
-  responseMimeType: 'application/json',
-};
+const groq = new Groq({ apiKey: env.GROQ_API_KEY });
 
 function formatTranscript(entries: TranscriptEntry[]): string {
   return entries
@@ -116,24 +110,33 @@ export async function analyzeMeeting(
 ): Promise<AIAnalysisResult> {
   logger.info('Starting AI analysis', { traceId, meetingId });
 
-  const model = genAI.getGenerativeModel(
-    { model: 'gemini-2.0-flash-lite', generationConfig },
-    { apiVersion: 'v1beta' }
-  );
-
   const prompt = buildPrompt(title, meetingDate.toISOString(), participants, transcript);
 
   try {
-    const response = await model.generateContent(prompt);
-    const rawText = response.response.text().trim();
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.1,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a meeting intelligence assistant. Always respond with valid JSON only — no markdown, no code fences, no explanation.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+    });
 
-    logger.debug('Gemini raw response', { traceId, rawText: rawText.slice(0, 500) });
+    const rawText = completion.choices[0]?.message?.content?.trim() ?? '';
+
+    logger.debug('Groq raw response', { traceId, rawText: rawText.slice(0, 500) });
 
     let parsed: AIAnalysisResult;
     try {
       parsed = JSON.parse(rawText) as AIAnalysisResult;
     } catch {
-      // Gemini occasionally wraps JSON in code fences despite responseMimeType
+      // Strip code fences if model wrapped the JSON
       const cleaned = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '');
       parsed = JSON.parse(cleaned) as AIAnalysisResult;
     }
@@ -148,7 +151,7 @@ export async function analyzeMeeting(
 
     return validated;
   } catch (err) {
-    logger.error('Gemini API error', { traceId, meetingId, error: String(err) });
+    logger.error('Groq API error', { traceId, meetingId, error: String(err) });
     throw new Error(`AI analysis failed: ${String(err)}`);
   }
 }
